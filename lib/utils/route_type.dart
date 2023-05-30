@@ -1,28 +1,74 @@
 import 'package:flutter/material.dart';
+import 'constants.dart';
 
-enum RouteType { All, A, B, C, D, E, F }
+enum RouteType {
+  // ignore: constant_identifier_names
+  All,
+  A,
+  B,
+  C,
+  D,
+  E,
+  F,
+}
 
 class RouteTypeInfo {
   final Color color;
+  final IconData iconData;
+  final int scrollIndex;
   final String routeName;
 
-  const RouteTypeInfo({
+  RouteTypeInfo({
     required this.color,
+    required this.iconData,
+    required this.scrollIndex,
     required this.routeName,
   });
 }
 
 class RouteTypeData {
   static final Map<RouteType, RouteTypeInfo> typeData = {
-    RouteType.All: const RouteTypeInfo(color: Colors.black, routeName: 'All'),
-    RouteType.A:
-        const RouteTypeInfo(color: Colors.orange, routeName: 'Route A'),
-    RouteType.B:
-        const RouteTypeInfo(color: Colors.yellow, routeName: 'Route B'),
-    RouteType.C: const RouteTypeInfo(color: Colors.green, routeName: 'Route C'),
-    RouteType.D:
-        const RouteTypeInfo(color: Colors.purple, routeName: 'Route D'),
-    RouteType.E: const RouteTypeInfo(color: Colors.amber, routeName: 'Route E'),
-    RouteType.F: const RouteTypeInfo(color: Colors.blue, routeName: 'Route F'),
+    RouteType.All: RouteTypeInfo(
+      color: Color(0xFF333333),
+      iconData: Icons.all_inclusive,
+      scrollIndex: 0,
+      routeName: 'All',
+    ),
+    RouteType.A: RouteTypeInfo(
+      color: AppColor.routeAOrange,
+      iconData: Icons.directions_bus,
+      scrollIndex: 1,
+      routeName: 'Route A',
+    ),
+    RouteType.B: RouteTypeInfo(
+      color: AppColor.routeBYellow,
+      iconData: Icons.directions_bus,
+      scrollIndex: 2,
+      routeName: 'Route B',
+    ),
+    RouteType.C: RouteTypeInfo(
+      color: AppColor.routeCGreen,
+      iconData: Icons.directions_bus,
+      scrollIndex: 3,
+      routeName: 'Route C',
+    ),
+    RouteType.D: RouteTypeInfo(
+      color: AppColor.routeDPurple,
+      iconData: Icons.directions_bus,
+      scrollIndex: 4,
+      routeName: 'Route D',
+    ),
+    RouteType.E: RouteTypeInfo(
+      color: AppColor.routeEDarkYellow,
+      iconData: Icons.directions_bus,
+      scrollIndex: 5,
+      routeName: 'Route E',
+    ),
+    RouteType.F: RouteTypeInfo(
+      color: AppColor.routeFBlue,
+      iconData: Icons.directions_bus,
+      scrollIndex: 6,
+      routeName: 'Route F',
+    ),
   };
 }

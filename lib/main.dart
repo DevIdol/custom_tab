@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
 import 'utils/route_type.dart';
 import 'utils/route_type_state.dart';
 
@@ -9,6 +8,8 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -16,39 +17,23 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MyHomePage(),
+      home: const MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends ConsumerWidget {
+  const MyHomePage({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final routeTypeStateNotifier =
+        ref.read(routeTypeStateNotifierProvider.notifier);
     final routeTypeState = ref.watch(routeTypeStateNotifierProvider);
-
-    // Check if all other tabs are unselected
-    final areOtherTabsUnselected = RouteType.values
-        .where((route) => route != RouteType.All)
-        .every((route) => !routeTypeState.selectedRouteTypes.contains(route));
-
-    // Check if only RouteType.All is selected
-    final isOnlyRouteTypeAllSelected =
-        routeTypeState.selectedRouteTypes.length == 1 &&
-            routeTypeState.selectedRouteTypes.contains(RouteType.All);
-
-    // Update the state to meet the requirements
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (areOtherTabsUnselected && !isOnlyRouteTypeAllSelected) {
-        ref.read(routeTypeStateNotifierProvider.notifier).clearRouteTypes();
-        ref
-            .read(routeTypeStateNotifierProvider.notifier)
-            .addOrRemove(RouteType.All);
-      }
-    });
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Route Types'),
+        title: const Text('Route Types'),
       ),
       body: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
@@ -59,27 +44,34 @@ class MyHomePage extends ConsumerWidget {
             children: RouteType.values.map((route) {
               final isSelected =
                   routeTypeState.selectedRouteTypes.contains(route);
+              final isAllSelected =
+                  routeTypeState.selectedRouteTypes.contains(RouteType.All);
+
+              Color containerColor = Colors.white;
+              if (isAllSelected && route == RouteType.All) {
+                containerColor = RouteTypeData.typeData[RouteType.All]!.color;
+              } else if (!isAllSelected && isSelected) {
+                containerColor = RouteTypeData.typeData[route]!.color;
+              }
+
               return GestureDetector(
                 onTap: () {
-                  ref
-                      .read(routeTypeStateNotifierProvider.notifier)
-                      .toggleRouteType(route);
+                  routeTypeStateNotifier.addOrRemove(route);
                 },
                 child: Container(
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
                     shape: BoxShape.rectangle,
-                    color: isSelected
-                        ? RouteTypeData.typeData[route]!.color
-                        : Colors.white,
+                    color: containerColor,
                   ),
                   child: Text(
                     RouteTypeData.typeData[route]!.routeName,
                     style: TextStyle(
-                        color: isSelected
-                            ? Colors.white
-                            : RouteTypeData.typeData[route]!.color),
+                      color: isSelected
+                          ? Colors.red
+                          : RouteTypeData.typeData[route]!.color,
+                    ),
                   ),
                 ),
               );

@@ -1,66 +1,95 @@
-import 'package:flutter/foundation.dart';
+import 'dart:developer';
+
 import 'package:hooks_riverpod/hooks_riverpod.dart';
-
 import 'route_type.dart';
+import 'state.dart';
 
-@immutable
-class RouteTypeState {
-  final Set<RouteType> selectedRouteTypes;
-
-  const RouteTypeState({required this.selectedRouteTypes});
-
-  RouteTypeState copyWith({Set<RouteType>? selectedRouteTypes}) {
-    return RouteTypeState(
-      selectedRouteTypes: selectedRouteTypes ?? this.selectedRouteTypes,
-    );
-  }
-}
-
+// Provider to manage the currently selected RouteType
 final routeTypeStateNotifierProvider =
-    StateNotifierProvider<RouteTypeStateNotifier, RouteTypeState>(
-  (ref) => RouteTypeStateNotifier(),
+    StateNotifierProvider.autoDispose<RouteTypeStateNotifier, RouteTypeState>(
+  (ref) {
+    final notifier = RouteTypeStateNotifier();
+    notifier.init();
+    return notifier;
+  },
 );
 
 class RouteTypeStateNotifier extends StateNotifier<RouteTypeState> {
-  RouteTypeStateNotifier()
-      : super(const RouteTypeState(selectedRouteTypes: {}));
+  RouteTypeStateNotifier() : super(RouteTypeState());
 
-  void toggleRouteType(RouteType routeType) {
-    final selectedTypes = state.selectedRouteTypes;
+  void init() {
+    selectAllRouteTypes(); // Select all Route Types initially
+    log('init');
+  }
 
+  void addOrRemove(RouteType routeType) {
     if (routeType == RouteType.All) {
-      state = const RouteTypeState(selectedRouteTypes: {RouteType.All});
+      selectAllRouteTypes();
     } else {
-      final updatedSelectedRouteTypes = selectedTypes.contains(routeType)
-          ? selectedTypes.difference({routeType})
-          : selectedTypes.union({routeType});
-
-      state = RouteTypeState(selectedRouteTypes: updatedSelectedRouteTypes);
-
-      if (updatedSelectedRouteTypes.length > 1 ||
-          (updatedSelectedRouteTypes.length == 1 &&
-              updatedSelectedRouteTypes.contains(RouteType.All))) {
-        state = RouteTypeState(
-            selectedRouteTypes:
-                updatedSelectedRouteTypes.difference({RouteType.All}));
+      if (state.selectedRouteTypes.length == RouteType.values.length) {
+        clearRouteTypes();
+        _addRouteType(routeType);
+        _updateAllRouteType();
+      } else {
+        final isSelected = state.selectedRouteTypes.contains(routeType);
+        if (isSelected) {
+          log('$routeType: remove');
+          _removeRouteType(routeType);
+        } else {
+          log('$routeType: add');
+          _addRouteType(routeType);
+        }
+        _updateAllRouteType();
       }
     }
   }
 
-  void clearRouteTypes() {
-    state = const RouteTypeState(selectedRouteTypes: {});
+  void _removeRouteType(RouteType routeType) {
+    final routeTypes = Set<RouteType>.of(state.selectedRouteTypes)
+      ..remove(routeType);
+    state = state.copyWith(selectedRouteTypes: routeTypes);
+    log("Remove: $state");
+
+    if (routeTypes.isEmpty) {
+      selectAllRouteTypes();
+    }
   }
 
-  void addOrRemove(RouteType routeType) {
-    final selectedTypes = state.selectedRouteTypes;
-    final isSelected = selectedTypes.contains(routeType);
+  void _addRouteType(RouteType routeType) {
+    final routeTypes = Set<RouteType>.from(state.selectedRouteTypes);
+    routeTypes.add(routeType);
 
-    if (isSelected) {
-      final updatedTypes = selectedTypes.difference({routeType});
-      state = RouteTypeState(selectedRouteTypes: updatedTypes);
+    // Remove all routes outside the selected range
+    final minIndex =
+        routeTypes.map((route) => route.index).reduce((a, b) => a < b ? a : b);
+    final maxIndex =
+        routeTypes.map((route) => route.index).reduce((a, b) => a > b ? a : b);
+    final routesToRemove = RouteType.values
+        .where((route) => route.index < minIndex || route.index > maxIndex);
+    routeTypes.removeAll(routesToRemove);
+
+    state = state.copyWith(selectedRouteTypes: routeTypes);
+    log("Add: $state");
+  }
+
+  void _updateAllRouteType() {
+    final allRouteType = RouteType.values
+        .where((routeType) => routeType != RouteType.All)
+        .every(state.selectedRouteTypes.contains);
+    if (allRouteType) {
+      _addRouteType(RouteType.All);
     } else {
-      final updatedTypes = selectedTypes.union({routeType});
-      state = RouteTypeState(selectedRouteTypes: updatedTypes);
+      _removeRouteType(RouteType.All);
     }
+  }
+
+  void clearRouteTypes() {
+    state = state.copyWith(selectedRouteTypes: {});
+  }
+
+  void selectAllRouteTypes() {
+    state = state.copyWith(
+        selectedRouteTypes: Set<RouteType>.from(RouteType.values));
+    log("$state");
   }
 }
